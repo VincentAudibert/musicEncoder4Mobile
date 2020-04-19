@@ -8,9 +8,14 @@ IFS=$(echo -en "\n\b")
 # kill script with single ctrl + C
 trap "exit" INT
 
-musicRoot="/home/vincentvinciane/Documents/testmusicencode/"
-musicTarget=/home/vincentvinciane/exportMusic/
+# Some option that might help for empty list & case insensitive
+shopt -s nullglob nocaseglob
+    
 
+#musicRoot="/home/vincentvinciane/Musique/"
+musicRoot="$1"
+#musicTarget=/home/vincentvinciane/exportMusic/
+musicTarget="$2"
 
 function encodeFolders() {
     local source="$1"
@@ -36,20 +41,13 @@ function encodeMusic() {
     local source="$1"
     local dest="$2"
     
-    printf "\n  Encoding folder :$source\n"
     if test -f "$dest.folderComplete"; then
-        printf "    Folder already encoded, skipped\n\n"
+        printf "    Folder already encoded, skipped : $source \n\n"
         return
     fi
     
-    shopt -s nullglob nocaseglob
-    
-    # remove bad characters from filenames
-    bad_chars="\?:\|\"*"
-    for i in $source*["$bad_chars"]*; do 
-        printf "    Renamed : $i\n"
-        mv "$i" "${i//[$bad_chars]/}"
-    done
+    printf "\n  Encoding folder :$source\n"
+    removeBadChars "$source"
     
     for file in $source*.{ogg,wma,flac,mp3} ; do
         local filename=$(basename "$file")
@@ -63,7 +61,15 @@ function encodeMusic() {
         
     done
     
-    touch ".folderComplete"
+    touch "$dest.folderComplete"
+}
+
+function removeBadChars() {
+    bad_chars="\?:\|\"*"
+    for i in $1*["$bad_chars"]*; do 
+        printf "    Renamed : $i\n"
+        mv "$i" "${i//[$bad_chars]/}"
+    done
 }
 
 encodeFolders $musicRoot $musicTarget
