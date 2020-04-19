@@ -5,6 +5,8 @@ clear
 SAVEIFS=$IFS
 IFS=$(echo -en "\n\b")
 
+# kill script with single ctrl + C
+trap "exit" INT
 
 musicRoot="/home/vincentvinciane/Documents/testmusicencode/"
 musicTarget=/home/vincentvinciane/exportMusic/
@@ -13,12 +15,6 @@ musicTarget=/home/vincentvinciane/exportMusic/
 function encodeFolders() {
     local source="$1"
     local dest="$2"
-    local folder
-    local foldername
-    local destFolder
-    
-    echo Looking into folder : $source
-    #echo With target being : $dest
     
     for folder in $source*/ ; do
         if [ -d "$folder" ]; then
@@ -27,8 +23,8 @@ function encodeFolders() {
             destFolder="$dest$folderName/"
             mkdir -p "$destFolder"
             
-            #echo ---folder:$folder
-            #echo ---dest:$destFolder            
+            printf "\nLooking into folder : $folderName\n"
+    
             encodeFolders "$folder" "$destFolder"
         fi
     done
@@ -40,9 +36,9 @@ function encodeMusic() {
     local source="$1"
     local dest="$2"
     
-    echo Encoding folder :$source
+    printf "\n  Encoding folder :$source\n"
     if test -f "$dest.folderComplete"; then
-        echo "    folder already encoded, skipped"
+        printf "    Folder already encoded, skipped\n\n"
         return
     fi
     
@@ -51,19 +47,19 @@ function encodeMusic() {
     # remove bad characters from filenames
     bad_chars="\?:\|\"*"
     for i in $source*["$bad_chars"]*; do 
-        echo $i
+        printf "    Renamed : $i\n"
         mv "$i" "${i//[$bad_chars]/}"
     done
     
     for file in $source*.{ogg,wma,flac,mp3} ; do
-        echo "    File to encode:"$file
         local filename=$(basename "$file")
         filename=${filename%.*}
+        printf "    File to encode:$filename\n"
         
         local output="$dest$filename.mp3"
         
         # encode to output dest
-        ffmpeg -i "$file" -vn -loglevel error -acodec libmp3lame -q:a 6 "$output"
+        ffmpeg -y -i "$file" -vn -loglevel error -acodec libmp3lame -q:a 6 "$output"
         
     done
     
